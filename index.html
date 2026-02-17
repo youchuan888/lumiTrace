@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LumiTrace Pro v2.1</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --card-active: #252525;
+            --primary: #0a84ff;
+            --success: #30d158;
+            --danger: #ff453a;
+            --text: #ffffff;
+            --text-dim: #555555;
+        }
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        .header { text-align: center; font-size: 1.8rem; font-weight: bold; margin: 5px 0; color: var(--primary); }
+
+        .clock-container {
+            background: #000;
+            color: #00ff00;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 2.8rem;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
+            border: 1px solid #333;
+        }
+
+        .control-grid {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+        .box {
+            flex: 1;
+            background: var(--card);
+            padding: 10px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 2px solid #333;
+            transition: all 0.3s ease;
+        }
+        .box.manual-active {
+            border-color: var(--primary);
+            background: var(--card-active);
+        }
+
+        .box-title { font-weight: bold; font-size: 0.9rem; text-align: center; color: #888; margin-bottom: 5px; }
+
+        .mode-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #000;
+            padding: 4px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+        .mode-label {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+        .mode-label.active { color: var(--primary); }
+        .mode-label.active-auto { color: #fff; }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-switch { background-color: var(--primary); }
+        input:checked + .slider-switch:before { transform: translateX(14px); }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 6px; }
+        .btn-stack button {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .btn-rst { background: #333; color: var(--danger); }
+        .btn-cmt { background: var(--primary); color: white; }
+        .btn-cmt:disabled { background: #222; color: #444; }
+
+        .slider-wrap { text-align: center; padding: 10px 0; }
+        .slider-num { font-size: 1.5rem; font-weight: bold; color: var(--primary); height: 30px; }
+        input[type=range] { width: 95%; height: 25px; }
+        .fade { opacity: 0.1; }
+
+        .ble-btn {
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: #333;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        .connected { background: var(--success); }
+
+        .log-area {
+            height: 40px;
+            background: #000;
+            color: #666;
+            padding: 5px 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">LumiTrace Light Pro</div>
+
+    <div class="clock-container" id="clock">00:00</div>
+
+    <div class="control-grid">
+        <div class="box" id="card-A">
+            <div class="box-title">ZONE A</div>
+            <div class="mode-selector">
+                <span id="label-auto-A" class="mode-label active-auto">AUTO</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-A" onchange="toggleMode('A')">
+                    <span class="slider-switch"></span>
+                </label>
+                <span id="label-man-A" class="mode-label">MANUAL</span>
+            </div>
+            <div class="slider-wrap">
+                <div id="val-A-text" class="slider-num fade">--</div>
+                <input type="range" id="slider-A" min="0" max="10" value="5" disabled oninput="handleSlider('A', this.value)">
+            </div>
+            <div class="btn-stack">
+                <button class="btn-rst" onclick="handleReset('A')">RESET</button>
+                <button class="btn-cmt" id="cmt-A" onclick="handleCommit('A')" disabled>COMMIT</button>
+            </div>
+        </div>
+
+        <div class="box" id="card-B">
+            <div class="box-title">ZONE B</div>
+            <div class="mode-selector">
+                <span id="label-auto-B" class="mode-label active-auto">AUTO</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-B" onchange="toggleMode('B')">
+                    <span class="slider-switch"></span>
+                </label>
+                <span id="label-man-B" class="mode-label">MANUAL</span>
+            </div>
+            <div class="slider-wrap">
+                <div id="val-B-text" class="slider-num fade">--</div>
+                <input type="range" id="slider-B" min="0" max="10" value="5" disabled oninput="handleSlider('B', this.value)">
+            </div>
+            <div class="btn-stack">
+                <button class="btn-rst" onclick="handleReset('B')">RESET</button>
+                <button class="btn-cmt" id="cmt-B" onclick="handleCommit('B')" disabled>COMMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="ble-btn" class="ble-btn" onclick="connectBLE()">CONNECT SMART</button>
+
+    <div id="log" class="log-area">Ready...</div>
+
+    <script>
+        const serviceUUID = '0000fff0-0000-1000-8000-00805f9b34fb';
+        const txCharUUID = '0000fff1-0000-1000-8000-00805f9b34fb';
+        let bleChar = null;
+        let h = 0, m = 0;
+
+        // 模擬鐘邏輯
+        setInterval(() => {
+            m++; if(m >= 60) { m = 0; h++; } if(h >= 24) h = 0;
+            document.getElementById('clock').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }, 100);
+
+        async function connectBLE() {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'SMART' }], optionalServices: [serviceUUID]
+                });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(serviceUUID);
+                bleChar = await service.getCharacteristic(txCharUUID);
+                document.getElementById('ble-btn').textContent = "● CONNECTED";
+                document.getElementById('ble-btn').classList.add('connected');
+                sendData(0xFF, "SYS", "SYNC");
+		h=0;
+		m=0;
+            } catch (e) { updateLog("Error: " + e); }
+        }
+
+        function toggleMode(zone) {
+            const isMan = document.getElementById(`mode-${zone}`).checked;
+            const slider = document.getElementById(`slider-${zone}`);
+            const text = document.getElementById(`val-${zone}-text`);
+            const btn = document.getElementById(`cmt-${zone}`);
+            const card = document.getElementById(`card-${zone}`);
+            const lblAuto = document.getElementById(`label-auto-${zone}`);
+            const lblMan = document.getElementById(`label-man-${zone}`);
+
+            slider.disabled = !isMan;
+            btn.disabled = !isMan;
+
+            if (isMan) {
+                // 切換至手動模式
+                card.classList.add('manual-active');
+                text.classList.remove('fade');
+                text.textContent = slider.value;
+                lblMan.classList.add('active');
+                lblAuto.classList.remove('active-auto');
+                sendData(parseInt(slider.value) + (zone === 'A' ? 0xA0 : 0xB0), zone, "MANUAL");
+            } else {
+                // 切換至自動模式
+                card.classList.remove('manual-active');
+                text.classList.add('fade');
+                text.textContent = "--";
+                lblMan.classList.remove('active');
+                lblAuto.classList.add('active-auto');
+                // 新增：切到 Auto 時送出通知數值
+                const autoVal = (zone === 'A' ? 0x01 : 0x81);
+                sendData(autoVal, zone, "AUTO-NOTIFY");
+            }
+        }
+
+// --- 新增：傳送狀態鎖與排隊機制 ---
+let isSending = false;
+let nextPendingValue = null;
+
+async function handleSlider(zone, val) {
+    document.getElementById(`val-${zone}-text`).textContent = val;
+    const byte = parseInt(val) + (zone === 'A' ? 0xA0 : 0xB0);
+    
+    // 呼叫具備「排隊機制」的傳送函式
+    queuedSendData(byte, zone, "SLIDE");
+}
+
+async function queuedSendData(byte, zone, act) {
+    // 如果正在傳送中，就將「最新的數值」暫存在後補區
+    if (isSending) {
+        nextPendingValue = { byte, zone, act };
+        return;
+    }
+
+    isSending = true;
+    await performSend(byte, zone, act);
+
+    // 傳完後，檢查後補區有沒有被急拉產生的「最新數值」
+    while (nextPendingValue !== null) {
+        const next = nextPendingValue;
+        nextPendingValue = null; // 清空候補
+        await performSend(next.byte, next.zone, next.act);
+    }
+    isSending = false;
+}
+
+async function performSend(byte, zone, act) {
+    if (bleChar) {
+        try {
+            // 使用 writeValueWithResponse 確保 MCU 已收到或連線通道已空
+            await bleChar.writeValue(new Uint8Array([byte]));
+            updateLog(`TX [${zone}] ${act}: 0x${byte.toString(16).toUpperCase().padStart(2,'0')}`);
+        } catch (e) {
+            console.warn("BLE Write Error:", e);
+        }
+    } else {
+        // 未連線時僅更新 Log 模擬
+        updateLog(`(Sim) [${zone}] ${act}: 0x${byte.toString(16).toUpperCase().padStart(2,'0')}`);
+    }
+}
+
+
+
+        function handleReset(zone) { sendData(zone === 'A' ? 0x00 : 0x80, zone, "RESET"); }
+
+        function handleCommit(zone) {
+            const isMan = document.getElementById(`mode-${zone}`).checked;
+            // 只有在 Manual 模式下才執行 Commit (依據需求 k)
+            if (isMan) {
+                const val = parseInt(document.getElementById(`slider-${zone}`).value);
+                sendData(val + (zone === 'A' ? 0xC0 : 0xD0), zone, "COMMIT");
+            }
+        }
+
+        async function sendData(byte, zone, act) {
+            if (bleChar) { 
+                try { await bleChar.writeValue(new Uint8Array([byte])); } catch (e) { console.log(e); } 
+            }
+            updateLog(`TX [${zone}] ${act}: 0x${byte.toString(16).toUpperCase().padStart(2,'0')}`);
+        }
+
+        function updateLog(msg) {
+            document.getElementById('log').textContent = msg;
+        }
+    </script>
+</body>
+</html>

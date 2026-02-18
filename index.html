@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=9.0, maximum-scale=9.0, user-scalable=no">
     <title>LumiTrace Pro v2.1</title>
     <style>
         :root {
@@ -63,7 +63,7 @@
             background: var(--card-active);
         }
 
-        .box-title { font-weight: bold; font-size: 0.9rem; text-align: center; color: #888; margin-bottom: 2px; }
+        .box-title { font-weight: bold; font-size: 0.9rem; text-align: center; color: #888; margin-bottom: 5px; }
 
         .mode-selector {
             display: flex;
@@ -73,7 +73,7 @@
             background: #000;
             padding: 4px;
             border-radius: 20px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         .mode-label {
             font-size: 0.7rem;
@@ -88,7 +88,7 @@
             position: relative;
             display: inline-block;
             width: 34px;
-            height: 10px;
+            height: 20px;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-switch {
@@ -97,7 +97,7 @@
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: #444;
             transition: .4s;
-            border-radius: 10px;
+            border-radius: 20px;
         }
         .slider-switch:before {
             position: absolute;
@@ -114,7 +114,7 @@
         .btn-stack { display: flex; flex-direction: column; gap: 6px; }
         .btn-stack button {
             width: 100%;
-            padding: 5px 0;
+            padding: 12px 0;
             border: none;
             border-radius: 8px;
             font-size: 0.85rem;
@@ -339,8 +339,4 @@ async function performSend(byte, zone, act) {
         }
     </script>
 </body>
-
 </html>
-
-
-
